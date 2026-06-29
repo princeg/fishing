@@ -158,18 +158,45 @@
     <circle cx="50" cy="18" r="2" fill="#243"/><circle cx="70" cy="18" r="2" fill="#243"/>
     <path d="M52 52 Q60 58 68 52" fill="none" stroke="#c62828" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`; }
+  function starSVG(){ const id="g"+(GID++); return `<svg viewBox="0 0 90 90" width="100%" height="100%">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc07a"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient></defs>
+    <path d="M45 5 L55 31 L83 33 L61 50 L69 77 L45 62 L21 77 L29 50 L7 33 L35 31 Z" fill="url(#${id})" stroke="#e0662a" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="39" cy="46" r="3" fill="#fff"/><circle cx="51" cy="46" r="3" fill="#fff"/>
+    <circle cx="39" cy="46" r="1.4" fill="#243"/><circle cx="51" cy="46" r="1.4" fill="#243"/>
+    <path d="M40 54 Q45 58 50 54" fill="none" stroke="#e0662a" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="45" cy="22" r="2" fill="#fff" opacity=".7"/><circle cx="64" cy="40" r="2" fill="#fff" opacity=".7"/><circle cx="34" cy="64" r="2" fill="#fff" opacity=".7"/>
+    </svg>`; }
+  function whaleSVG(){ const id="g"+(GID++); return `<svg viewBox="0 0 170 100" width="100%" height="100%">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc4ef"/><stop offset="1" stop-color="#3f7fc0"/></linearGradient></defs>
+    <path d="M44 55 L8 28 Q22 55 8 82 Z" fill="#3f7fc0" stroke="#2b5e92" stroke-width="2.5"/>
+    <path d="M42 32 Q95 6 140 36 Q162 50 150 68 Q118 88 70 84 Q40 80 34 60 Q35 44 42 32 Z" fill="url(#${id})" stroke="#2b5e92" stroke-width="2.5"/>
+    <path d="M58 68 Q104 86 146 66 Q120 82 82 82 Q64 80 58 68 Z" fill="#e6f3ff" opacity=".55"/>
+    <circle cx="126" cy="46" r="6.5" fill="#fff"/><circle cx="128" cy="47" r="3.4" fill="#243"/>
+    <path d="M138 58 Q150 63 143 68" fill="none" stroke="#2b5e92" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M74 30 Q70 14 78 6 M84 30 Q90 14 98 9" stroke="#bfe3ff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <circle cx="78" cy="5" r="2.6" fill="#bfe3ff"/><circle cx="98" cy="8" r="2.6" fill="#bfe3ff"/>
+    </svg>`; }
   const boatSVG=`<svg viewBox="0 0 220 170" width="100%" height="100%">
     <!-- girl -->
     <path d="M150 72 L205 20" stroke="#9c6b3f" stroke-width="4" stroke-linecap="round"/>
+    <!-- long hair (behind) -->
+    <path d="M89 56 Q68 92 82 128 Q96 124 95 62 Z" fill="#6f4326"/>
+    <path d="M131 56 Q152 92 138 128 Q124 124 125 62 Z" fill="#6f4326"/>
     <ellipse cx="110" cy="118" rx="26" ry="6" fill="#0c4f86" opacity=".15"/>
+    <!-- dress -->
     <path d="M96 116 Q110 60 124 116 Z" fill="#ff5fa2" stroke="#d6337a" stroke-width="2"/>
+    <!-- head -->
     <circle cx="110" cy="60" r="19" fill="#ffd9b8" stroke="#e3a877" stroke-width="2"/>
-    <path d="M91 58 Q90 34 110 34 Q130 34 129 58 Q124 46 110 46 Q96 46 91 58 Z" fill="#7a4a2b"/>
+    <!-- fringe -->
+    <path d="M91 60 Q90 33 110 33 Q130 33 129 60 Q126 47 118 46 Q116 41 110 41 Q104 41 102 46 Q94 47 91 60 Z" fill="#7a4a2b"/>
+    <!-- face -->
     <circle cx="103" cy="60" r="2.4" fill="#3a2a20"/><circle cx="117" cy="60" r="2.4" fill="#3a2a20"/>
     <path d="M104 67 Q110 71 116 67" fill="none" stroke="#c0607a" stroke-width="2.2" stroke-linecap="round"/>
     <circle cx="98" cy="64" r="3" fill="#ff9db5" opacity=".7"/><circle cx="122" cy="64" r="3" fill="#ff9db5" opacity=".7"/>
+    <!-- arm -->
     <path d="M124 92 Q150 84 152 72" stroke="#ffd9b8" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <circle cx="123" cy="40" r="5" fill="#ffd166"/>
+    <!-- bow -->
+    <path d="M120 38 l9 -5 0 11 z" fill="#ff3b6b"/><path d="M120 38 l-9 -5 0 11 z" fill="#ff3b6b"/><circle cx="120" cy="38.5" r="3.2" fill="#ffd166"/>
     <!-- boat hull -->
     <path d="M24 116 L196 116 L176 150 Q110 168 44 150 Z" fill="#d9913f" stroke="#a9692a" stroke-width="3"/>
     <path d="M24 116 Q110 134 196 116" fill="none" stroke="#a9692a" stroke-width="3"/>
@@ -209,16 +236,22 @@
     const W=S.W,H=S.H,wy=S.waterY;
     deco.setAttribute("viewBox",`0 0 ${W} ${H}`);
     // rainbow arcs (left side), sun (right), wavy water line
+    // concentric rainbow sitting on the water line
     const rb=["#ff6b6b","#ffa94d","#ffe066","#69db7c","#4dabf7","#9775fa"];
+    const rcx=W*0.24, R=Math.min(W*0.26, wy-24), rsw=Math.max(7,R*0.07);
     let arcs="";
-    rb.forEach((c,i)=>{ const r=W*0.20 - i*Math.max(10,W*0.016);
-      arcs+=`<path d="M ${W*0.06} ${wy} A ${r} ${r} 0 0 1 ${W*0.06+2*r} ${wy}" fill="none" stroke="${c}" stroke-width="${Math.max(8,W*0.012)}"/>`; });
-    const sunX=W*0.85, sunY=H*0.16, sr=Math.max(40,W*0.05);
-    let rays=""; for(let k=0;k<12;k++){ const a=k*Math.PI/6; rays+=`<line x1="${sunX+Math.cos(a)*sr*1.25}" y1="${sunY+Math.sin(a)*sr*1.25}" x2="${sunX+Math.cos(a)*sr*1.7}" y2="${sunY+Math.sin(a)*sr*1.7}" stroke="#ffd43b" stroke-width="${Math.max(5,W*0.006)}" stroke-linecap="round"/>`; }
+    rb.forEach((c,i)=>{ const r=R - i*rsw; if(r>rsw)
+      arcs+=`<path d="M ${rcx-r} ${wy} A ${r} ${r} 0 0 1 ${rcx+r} ${wy}" fill="none" stroke="${c}" stroke-width="${rsw}"/>`; });
+    // single sun, kept fully on screen in the top-right
+    const sr=Math.max(34,W*0.045), sunX=W*0.86, sunY=Math.max(sr+18,H*0.20);
+    let rays=""; for(let k=0;k<12;k++){ const a=k*Math.PI/6;
+      rays+=`<line x1="${sunX+Math.cos(a)*sr*1.25}" y1="${sunY+Math.sin(a)*sr*1.25}" x2="${sunX+Math.cos(a)*sr*1.7}" y2="${sunY+Math.sin(a)*sr*1.7}" stroke="#ffd43b" stroke-width="${Math.max(5,W*0.006)}" stroke-linecap="round"/>`; }
     const wave=`<path d="M0 ${wy} Q ${W*0.08} ${wy-10} ${W*0.16} ${wy} T ${W*0.32} ${wy} T ${W*0.48} ${wy} T ${W*0.64} ${wy} T ${W*0.80} ${wy} T ${W*0.96} ${wy} T ${W*1.12} ${wy} V ${H} H 0 Z" fill="#5fc0ee" opacity=".5"/>`;
-    deco.innerHTML=`${arcs}${rays}<circle cx="${sunX}" cy="${sunY}" r="${sr}" fill="#ffe066" stroke="#ffd43b" stroke-width="3"/>
-      <circle cx="${sunX-sr*0.32}" cy="${sunY-2}" r="${sr*0.1}" fill="#caa400"/><circle cx="${sunX+sr*0.32}" cy="${sunY-2}" r="${sr*0.1}" fill="#caa400"/>
-      <path d="M ${sunX-sr*0.3} ${sunY+sr*0.3} Q ${sunX} ${sunY+sr*0.6} ${sunX+sr*0.3} ${sunY+sr*0.3}" fill="none" stroke="#caa400" stroke-width="3" stroke-linecap="round"/>
+    deco.innerHTML=`${arcs}${rays}
+      <circle cx="${sunX}" cy="${sunY}" r="${sr}" fill="#ffe066" stroke="#ffd43b" stroke-width="3"/>
+      <circle cx="${sunX-sr*0.32}" cy="${sunY-sr*0.05}" r="${sr*0.1}" fill="#caa400"/>
+      <circle cx="${sunX+sr*0.32}" cy="${sunY-sr*0.05}" r="${sr*0.1}" fill="#caa400"/>
+      <path d="M ${sunX-sr*0.32} ${sunY+sr*0.28} Q ${sunX} ${sunY+sr*0.6} ${sunX+sr*0.32} ${sunY+sr*0.28}" fill="none" stroke="#caa400" stroke-width="3" stroke-linecap="round"/>
       ${wave}`;
     // clouds
     clouds.forEach(c=>c.el.remove()); clouds=[];
@@ -245,14 +278,16 @@
     S.fish.push(f);
   }
   function spawnOther(){
-    const isT=Math.random()<0.5; const html=isT?turtleSVG():crabSVG();
-    const w=S.fishW*1.15, h=w*(isT?0.62:0.67);
-    const el=makeEl(html,w,h);
+    const r=Math.random(); let type;
+    if(r<0.28) type="turtle"; else if(r<0.52) type="crab"; else if(r<0.78) type="starfish"; else type="whale";
     const dir=Math.random()<0.5?1:-1;
-    const o={el,type:isT?"turtle":"crab",dir,w,h,
-      x:dir>0?-w-40:S.W+40, y:S.H-h*1.25-Math.random()*40,
-      v:24+Math.random()*26, caught:false, bub:1.4,
-      mfx:isT?0.9:0.5, mfy:0.62, val:2};
+    let html,w,h,v,val,mfx,mfy,y;
+    if(type==="turtle"){ html=turtleSVG(); w=S.fishW*1.15; h=w*0.62; v=24+Math.random()*24; val=2; mfx=0.9; mfy=0.62; y=S.H-h*1.25-Math.random()*30; }
+    else if(type==="crab"){ html=crabSVG(); w=S.fishW*1.1; h=w*0.67; v=22+Math.random()*22; val=2; mfx=0.5; mfy=0.62; y=S.H-h*1.2-Math.random()*20; }
+    else if(type==="starfish"){ html=starSVG(); w=S.fishW*0.72; h=w; v=12+Math.random()*14; val=1; mfx=0.5; mfy=0.58; y=S.H-h*1.15-Math.random()*45; }
+    else { html=whaleSVG(); w=S.fishW*2.0; h=w*0.58; v=26+Math.random()*20; val=3; mfx=0.86; mfy=0.58; y=S.waterY+(S.H-S.waterY)*0.28+Math.random()*40; }
+    const el=makeEl(html,w,h);
+    const o={el,type,dir,w,h,x:dir>0?-w-40:S.W+40,y,v,caught:false,bub:1.4,mfx,mfy,val};
     S.others.push(o);
   }
   function entMouth(o){ const mx=o.x + (o.dir>0?o.mfx:(1-o.mfx))*o.w; const my=o.y+o.mfy*o.h; return {x:mx,y:my}; }
@@ -272,7 +307,7 @@
     const all=S.fish.concat(S.others);
     for(const o of all){ if(o.caught) continue;
       const m=entMouth(o); const d=Math.hypot(hx-m.x,hy-m.y);
-      if(d < Math.max(34,S.fishW*0.34)){ o.caught=true; S.caught=o; S.reelIn=true; sCatch(); sparkle(hx,hy); return; }
+      if(d < Math.max(42,S.fishW*0.42)){ o.caught=true; S.caught=o; S.reelIn=true; sCatch(); sparkle(hx,hy); return; }
     }
   }
 
@@ -351,7 +386,7 @@
       const wob=Math.sin(S.t*1.5+o.x*0.02)*2;
       o.el.style.transform=`translate(${o.x}px,${o.y+wob}px) scaleX(${o.dir})`;
     }
-    S.spawnOther-=dt; if(S.spawnOther<=0 && S.others.length<2){ S.spawnOther=7+Math.random()*7; spawnOther(); }
+    S.spawnOther-=dt; if(S.spawnOther<=0 && S.others.length<3){ S.spawnOther=5+Math.random()*6; spawnOther(); }
 
     // bubbles
     for(let i=S.bubbles.length-1;i>=0;i--){ const b=S.bubbles[i]; b.life+=dt; b.y-=b.vy*dt; b.x+=Math.sin(b.life*4)*0.4;
