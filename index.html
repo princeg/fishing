@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#7ec8ff" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<title>Saira's Fishing Fun</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;
+    font-family:"Chalkboard SE","Comic Sans MS",ui-rounded,system-ui,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none;}
+  #game{position:fixed;inset:0;overflow:hidden;background:#bfe9ff;}
+  #sky{position:absolute;left:0;right:0;top:0;background:linear-gradient(#bfe9ff 0%,#e8f7ff 70%,#fdfce8 100%);}
+  #water{position:absolute;left:0;right:0;bottom:0;
+    background:linear-gradient(#4fb6e6 0%,#2f93d8 45%,#1f6fb8 100%);}
+  #deco,#entities,#fxlayer{position:absolute;inset:0;width:100%;height:100%;}
+  #deco{pointer-events:none;}
+  #entities{pointer-events:none;}
+  #fxlayer{pointer-events:none;}
+  .ent{position:absolute;left:0;top:0;will-change:transform;}
+  .cloud{position:absolute;top:0;left:0;will-change:transform;pointer-events:none;}
+  #boat{position:absolute;left:0;top:0;will-change:transform;z-index:6;}
+  #lineSvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
+
+  .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);
+    border:2px solid rgba(255,255,255,.8);pointer-events:none;will-change:transform,opacity;}
+  .spark{position:absolute;pointer-events:none;font-size:34px;animation:sf .8s ease-out forwards;}
+  @keyframes sf{from{transform:translate(-50%,-50%) scale(.3);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.3);opacity:0}}
+
+  /* HUD */
+  #hud{position:absolute;top:0;left:0;right:0;height:62px;display:flex;align-items:center;gap:12px;
+    padding:0 16px;z-index:20;}
+  #score{background:rgba(255,255,255,.85);border-radius:999px;padding:.2em .9em;font-size:26px;color:#1f6fb8;
+    box-shadow:0 4px 0 rgba(0,0,0,.12);display:flex;align-items:center;gap:.3em;}
+  .hudbtn{margin-left:auto;}
+  #hud button{width:50px;height:50px;border:none;border-radius:50%;cursor:pointer;font-size:24px;
+    background:rgba(255,255,255,.85);box-shadow:0 4px 0 rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;}
+  #hud button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.12);}
+
+  /* Controls */
+  .pad{position:absolute;bottom:max(18px,3vh);z-index:20;display:flex;gap:14px;align-items:center;}
+  #padLeft{left:max(18px,3vw);}
+  #padRight{right:max(18px,3vw);}
+  .ctl{width:min(16vw,88px);height:min(16vw,88px);border:none;border-radius:24px;cursor:pointer;
+    background:rgba(255,255,255,.55);box-shadow:0 5px 0 rgba(0,0,0,.18);color:#1f6fb8;font-size:min(8vw,44px);
+    display:flex;align-items:center;justify-content:center;touch-action:none;}
+  .ctl:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .padlabel{position:absolute;bottom:calc(min(16vw,88px) + max(22px,3.4vh));font-size:15px;color:#0c4f86;
+    background:rgba(255,255,255,.6);border-radius:8px;padding:2px 8px;white-space:nowrap;}
+  #padLeft .padlabel{left:max(18px,3vw);} #padRight .padlabel{right:max(18px,3vw);}
+
+  /* Overlays */
+  #start{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2vh;text-align:center;background:radial-gradient(120% 100% at 50% 20%,#e8f7ff,#bfe9ff 70%,#8fd3f5 100%);}
+  #start h1{font-size:min(9vw,64px);color:#0c6cae;margin:.1em;text-shadow:0 3px 0 #fff;}
+  #start p{font-size:min(4.5vw,24px);color:#0c4f86;margin:.2em;max-width:80%;}
+  .bigbtn{font-family:inherit;border:none;cursor:pointer;color:#fff;font-size:min(7vw,40px);
+    padding:.4em 1.2em;border-radius:999px;background:linear-gradient(#5fc0ff,#1f8fe0);box-shadow:0 7px 0 #1670b8;}
+  .bigbtn:active{transform:translateY(4px);box-shadow:0 3px 0 #1670b8;}
+  #rotate{display:none;position:absolute;inset:0;z-index:80;background:#0c3a5e;color:#fff;
+    flex-direction:column;align-items:center;justify-content:center;font-size:6vw;gap:2vh;text-align:center;}
+  @media (orientation:portrait){#rotate{display:flex;}}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="sky"></div>
+  <div id="water"></div>
+  <svg id="deco" preserveAspectRatio="none"></svg>
+  <div id="entities"></div>
+  <svg id="lineSvg" preserveAspectRatio="none"></svg>
+  <div id="boat"></div>
+  <div id="fxlayer"></div>
+
+  <div id="hud">
+    <div id="score">&#x1F41F; <span id="scoreVal">0</span></div>
+    <button id="soundBtn" class="hudbtn">&#x1F50A;</button>
+    <button id="resetBtn">&#x21BB;</button>
+  </div>
+
+  <div class="pad" id="padLeft">
+    <div class="padlabel">Move boat</div>
+    <button class="ctl" data-dir="L">&#x25C0;</button>
+    <button class="ctl" data-dir="R">&#x25B6;</button>
+  </div>
+  <div class="pad" id="padRight">
+    <div class="padlabel">Rod up / down</div>
+    <button class="ctl" data-dir="U">&#x25B2;</button>
+    <button class="ctl" data-dir="D">&#x25BC;</button>
+  </div>
+
+  <div id="start">
+    <h1>&#x1F3A3; Saira's Fishing Fun</h1>
+    <p>Move the boat and drop the line to the fish's mouth to catch it!</p>
+    <p>Use the arrow buttons (or arrow keys).</p>
+    <button class="bigbtn" id="startBtn">&#x25B6;&#xFE0F; Play</button>
+  </div>
+  <div id="rotate">&#x1F504;<div>Turn your iPad sideways!</div></div>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const game=document.getElementById("game"), entitiesEl=document.getElementById("entities"),
+        boatEl=document.getElementById("boat"), lineSvg=document.getElementById("lineSvg"),
+        deco=document.getElementById("deco"), fx=document.getElementById("fxlayer"),
+        skyEl=document.getElementById("sky"), waterEl=document.getElementById("water");
+
+  // ---------- Audio ----------
+  let actx=null, soundOn=true;
+  function ensureAudio(){ if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(actx&&actx.state==="suspended")actx.resume(); }
+  function note(f,t0,d,vol,type){ if(!actx||!soundOn)return; const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||"triangle";o.frequency.value=f;const t=actx.currentTime+t0;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+0.02); }
+  const sCatch=()=>{[523,659,784,1047].forEach((f,i)=>note(f,i*0.06,0.22,0.28));};
+  const sReel =()=>{note(300,0,0.1,0.16,"sine");note(420,0.05,0.12,0.16,"sine");};
+  const sSplash=()=>{note(180,0,0.18,0.2,"sine");};
+
+  // ---------- Art ----------
+  let GID=0;
+  const FISH_PAL=[["#ffb05a","#ff7a1a","#d35400"],["#ffb3d9","#ff5fa2","#d6337a"],
+    ["#ffe16b","#ffc21a","#d99e00"],["#8fe6e0","#2fb8b0","#1c8a83"],
+    ["#c9a9ff","#9a5cff","#6f33cc"],["#9fd0ff","#4ea3ff","#2b73c4"]];
+  function fishSVG(p){ const id="g"+(GID++); return `<svg viewBox="0 0 120 70" width="100%" height="100%">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p[0]}"/><stop offset="1" stop-color="${p[1]}"/></linearGradient></defs>
+    <path d="M30 35 L4 12 Q15 35 4 58 Z" fill="${p[1]}" stroke="${p[2]}" stroke-width="2"/>
+    <path d="M52 13 Q68 2 84 16" fill="${p[0]}" stroke="${p[2]}" stroke-width="2"/>
+    <path d="M54 57 Q66 64 80 55" fill="${p[1]}" stroke="${p[2]}" stroke-width="2"/>
+    <ellipse cx="62" cy="35" rx="42" ry="24" fill="url(#${id})" stroke="${p[2]}" stroke-width="2.5"/>
+    <ellipse cx="60" cy="44" rx="30" ry="11" fill="#ffffff" opacity=".22"/>
+    <circle cx="92" cy="28" r="7.5" fill="#fff"/><circle cx="94" cy="29" r="3.6" fill="#243"/>
+    <path d="M99 40 Q105 44 99 48" fill="none" stroke="${p[2]}" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`; }
+  function turtleSVG(){ const id="g"+(GID++); return `<svg viewBox="0 0 130 80" width="100%" height="100%">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fe080"/><stop offset="1" stop-color="#46a047"/></linearGradient></defs>
+    <ellipse cx="40" cy="64" rx="12" ry="7" fill="#7cc36b"/><ellipse cx="78" cy="64" rx="12" ry="7" fill="#7cc36b"/>
+    <path d="M28 56 Q65 16 102 56 Q92 66 65 66 Q38 66 28 56 Z" fill="url(#${id})" stroke="#2e7d32" stroke-width="2.5"/>
+    <path d="M65 22 V60 M44 32 L40 58 M86 32 L90 58 M34 50 H96" stroke="#2e7d32" stroke-width="2" fill="none" opacity=".7"/>
+    <circle cx="112" cy="50" r="12" fill="#7cc36b" stroke="#2e7d32" stroke-width="2.5"/>
+    <circle cx="116" cy="47" r="2.4" fill="#243"/>
+    <path d="M118 54 Q122 56 118 58" fill="none" stroke="#2e7d32" stroke-width="2"/>
+    </svg>`; }
+  function crabSVG(){ const id="g"+(GID++); return `<svg viewBox="0 0 120 80" width="100%" height="100%">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a73"/><stop offset="1" stop-color="#ef4636"/></linearGradient></defs>
+    <path d="M20 50 q-10 6 -4 16 M30 56 q-12 4 -10 16 M100 50 q10 6 4 16 M90 56 q12 4 10 16" stroke="#c62828" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="50" rx="36" ry="22" fill="url(#${id})" stroke="#c62828" stroke-width="2.5"/>
+    <path d="M28 44 q-18 -6 -22 -20 q12 2 16 10 q6 -2 8 4 Z" fill="#ff6a55" stroke="#c62828" stroke-width="2"/>
+    <path d="M92 44 q18 -6 22 -20 q-12 2 -16 10 q-6 -2 -8 4 Z" fill="#ff6a55" stroke="#c62828" stroke-width="2"/>
+    <path d="M50 30 V20 M70 30 V20" stroke="#c62828" stroke-width="3"/>
+    <circle cx="50" cy="18" r="5" fill="#fff" stroke="#c62828" stroke-width="2"/><circle cx="70" cy="18" r="5" fill="#fff" stroke="#c62828" stroke-width="2"/>
+    <circle cx="50" cy="18" r="2" fill="#243"/><circle cx="70" cy="18" r="2" fill="#243"/>
+    <path d="M52 52 Q60 58 68 52" fill="none" stroke="#c62828" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`; }
+  const boatSVG=`<svg viewBox="0 0 220 170" width="100%" height="100%">
+    <!-- girl -->
+    <path d="M150 72 L205 20" stroke="#9c6b3f" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="110" cy="118" rx="26" ry="6" fill="#0c4f86" opacity=".15"/>
+    <path d="M96 116 Q110 60 124 116 Z" fill="#ff5fa2" stroke="#d6337a" stroke-width="2"/>
+    <circle cx="110" cy="60" r="19" fill="#ffd9b8" stroke="#e3a877" stroke-width="2"/>
+    <path d="M91 58 Q90 34 110 34 Q130 34 129 58 Q124 46 110 46 Q96 46 91 58 Z" fill="#7a4a2b"/>
+    <circle cx="103" cy="60" r="2.4" fill="#3a2a20"/><circle cx="117" cy="60" r="2.4" fill="#3a2a20"/>
+    <path d="M104 67 Q110 71 116 67" fill="none" stroke="#c0607a" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="98" cy="64" r="3" fill="#ff9db5" opacity=".7"/><circle cx="122" cy="64" r="3" fill="#ff9db5" opacity=".7"/>
+    <path d="M124 92 Q150 84 152 72" stroke="#ffd9b8" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <circle cx="123" cy="40" r="5" fill="#ffd166"/>
+    <!-- boat hull -->
+    <path d="M24 116 L196 116 L176 150 Q110 168 44 150 Z" fill="#d9913f" stroke="#a9692a" stroke-width="3"/>
+    <path d="M24 116 Q110 134 196 116" fill="none" stroke="#a9692a" stroke-width="3"/>
+    <path d="M44 150 Q110 168 176 150" fill="none" stroke="#a9692a" stroke-width="2" opacity=".6"/>
+    <path d="M60 128 V146 M90 132 V152 M120 132 V152 M150 130 V148" stroke="#a9692a" stroke-width="2" opacity=".5"/>
+    </svg>`;
+
+  // ---------- State ----------
+  const S={W:0,H:0,waterY:0,boatX:0,boatTopY:0,rodTipY:0,lineLen:0,minLen:0,maxLen:0,
+    boatW:0,boatH:0,fishW:0,fishH:0,score:0,reelIn:false,caught:null,t:0,
+    fish:[],others:[],bubbles:[],pressed:{},spawnOther:0,running:false};
+
+  function size(){
+    S.W=window.innerWidth; S.H=window.innerHeight;
+    S.waterY=Math.round(S.H*0.40);
+    skyEl.style.height=(S.waterY+30)+"px";
+    waterEl.style.top=S.waterY+"px";
+    const base=Math.min(S.W,S.H);
+    S.fishW=Math.max(78,Math.min(140,base*0.16)); S.fishH=S.fishW*0.58;
+    S.boatW=Math.max(210,Math.min(380,S.W*0.26)); S.boatH=S.boatW*0.77;
+    S.boatTopY=S.waterY-S.boatH*0.52;
+    S.rodTipY=S.boatTopY+0.12*S.boatH;
+    S.minLen=Math.max(20,(S.waterY+26)-S.rodTipY);
+    S.maxLen=(S.H-60)-S.rodTipY;
+    if(S.boatX===0) S.boatX=S.W*0.30;
+    if(S.lineLen===0) S.lineLen=(S.waterY+(S.H-60))/2 - S.rodTipY;
+    S.boatX=Math.max(S.boatW*0.4,Math.min(S.W-S.boatW*0.4,S.boatX));
+    S.lineLen=Math.max(S.minLen,Math.min(S.maxLen,S.lineLen));
+    boatEl.style.width=S.boatW+"px"; boatEl.style.height=S.boatH+"px"; boatEl.innerHTML=boatSVG;
+    drawDeco();
+  }
+  function rodTipX(){ return (S.boatX - S.boatW/2) + 0.93*S.boatW; }
+
+  // ---------- Background deco (sun, rainbow, clouds, waves) ----------
+  let clouds=[];
+  function drawDeco(){
+    const W=S.W,H=S.H,wy=S.waterY;
+    deco.setAttribute("viewBox",`0 0 ${W} ${H}`);
+    // rainbow arcs (left side), sun (right), wavy water line
+    const rb=["#ff6b6b","#ffa94d","#ffe066","#69db7c","#4dabf7","#9775fa"];
+    let arcs="";
+    rb.forEach((c,i)=>{ const r=W*0.20 - i*Math.max(10,W*0.016);
+      arcs+=`<path d="M ${W*0.06} ${wy} A ${r} ${r} 0 0 1 ${W*0.06+2*r} ${wy}" fill="none" stroke="${c}" stroke-width="${Math.max(8,W*0.012)}"/>`; });
+    const sunX=W*0.85, sunY=H*0.16, sr=Math.max(40,W*0.05);
+    let rays=""; for(let k=0;k<12;k++){ const a=k*Math.PI/6; rays+=`<line x1="${sunX+Math.cos(a)*sr*1.25}" y1="${sunY+Math.sin(a)*sr*1.25}" x2="${sunX+Math.cos(a)*sr*1.7}" y2="${sunY+Math.sin(a)*sr*1.7}" stroke="#ffd43b" stroke-width="${Math.max(5,W*0.006)}" stroke-linecap="round"/>`; }
+    const wave=`<path d="M0 ${wy} Q ${W*0.08} ${wy-10} ${W*0.16} ${wy} T ${W*0.32} ${wy} T ${W*0.48} ${wy} T ${W*0.64} ${wy} T ${W*0.80} ${wy} T ${W*0.96} ${wy} T ${W*1.12} ${wy} V ${H} H 0 Z" fill="#5fc0ee" opacity=".5"/>`;
+    deco.innerHTML=`${arcs}${rays}<circle cx="${sunX}" cy="${sunY}" r="${sr}" fill="#ffe066" stroke="#ffd43b" stroke-width="3"/>
+      <circle cx="${sunX-sr*0.32}" cy="${sunY-2}" r="${sr*0.1}" fill="#caa400"/><circle cx="${sunX+sr*0.32}" cy="${sunY-2}" r="${sr*0.1}" fill="#caa400"/>
+      <path d="M ${sunX-sr*0.3} ${sunY+sr*0.3} Q ${sunX} ${sunY+sr*0.6} ${sunX+sr*0.3} ${sunY+sr*0.3}" fill="none" stroke="#caa400" stroke-width="3" stroke-linecap="round"/>
+      ${wave}`;
+    // clouds
+    clouds.forEach(c=>c.el.remove()); clouds=[];
+    const cloudSVG=`<svg viewBox="0 0 160 90" width="100%" height="100%"><g fill="#ffffff" stroke="#e6f0f7" stroke-width="2">
+      <ellipse cx="55" cy="58" rx="40" ry="26"/><ellipse cx="95" cy="50" rx="44" ry="30"/><ellipse cx="120" cy="62" rx="34" ry="22"/></g></svg>`;
+    for(let i=0;i<3;i++){ const el=document.createElement("div"); el.className="cloud";
+      const cw=Math.max(120,W*0.16); el.style.width=cw+"px"; el.style.height=(cw*0.56)+"px"; el.innerHTML=cloudSVG;
+      const c={el,x:Math.random()*W,y:H*0.04+Math.random()*H*0.16,v:6+Math.random()*8};
+      skyEl.parentNode.insertBefore(el,deco); clouds.push(c); }
+  }
+
+  // ---------- Entities ----------
+  function makeEl(html,w,h){ const el=document.createElement("div"); el.className="ent"; el.style.width=w+"px"; el.style.height=h+"px"; el.innerHTML=html; entitiesEl.appendChild(el); return el; }
+  function spawnFish(side){
+    const p=FISH_PAL[(Math.random()*FISH_PAL.length)|0];
+    const el=makeEl(fishSVG(p),S.fishW,S.fishH);
+    const dir=side==null?(Math.random()<0.5?1:-1):side;
+    const band=[S.waterY+S.fishH*0.4, S.H-S.fishH*1.4];
+    const f={el,type:"fish",dir,w:S.fishW,h:S.fishH,
+      x:dir>0?-S.fishW-Math.random()*120:S.W+Math.random()*120,
+      y:band[0]+Math.random()*(band[1]-band[0]),
+      v:36+Math.random()*46, caught:false, bub:0.6+Math.random(),
+      mfx:0.84,mfy:0.62};
+    S.fish.push(f);
+  }
+  function spawnOther(){
+    const isT=Math.random()<0.5; const html=isT?turtleSVG():crabSVG();
+    const w=S.fishW*1.15, h=w*(isT?0.62:0.67);
+    const el=makeEl(html,w,h);
+    const dir=Math.random()<0.5?1:-1;
+    const o={el,type:isT?"turtle":"crab",dir,w,h,
+      x:dir>0?-w-40:S.W+40, y:S.H-h*1.25-Math.random()*40,
+      v:24+Math.random()*26, caught:false, bub:1.4,
+      mfx:isT?0.9:0.5, mfy:0.62, val:2};
+    S.others.push(o);
+  }
+  function entMouth(o){ const mx=o.x + (o.dir>0?o.mfx:(1-o.mfx))*o.w; const my=o.y+o.mfy*o.h; return {x:mx,y:my}; }
+
+  function addBubble(x,y,r){ const b=document.createElement("div"); b.className="bubble";
+    b.style.width=r*2+"px"; b.style.height=r*2+"px"; entitiesEl.appendChild(b);
+    S.bubbles.push({el:b,x,y,r,vy:18+Math.random()*16,life:0,max:1.6+Math.random()}); }
+  function sparkle(x,y){ const items=["✨","⭐","💫"];
+    for(let i=0;i<7;i++){ const s=document.createElement("div"); s.className="spark"; s.textContent=items[i%items.length];
+      s.style.left=x+"px"; s.style.top=y+"px"; const a=Math.random()*6.28,d=40+Math.random()*60;
+      s.style.setProperty("--dx",Math.cos(a)*d+"px"); s.style.setProperty("--dy",Math.sin(a)*d+"px");
+      fx.appendChild(s); setTimeout(()=>s.remove(),820); } }
+
+  // ---------- Catch ----------
+  function tryCatch(hx,hy){
+    if(S.reelIn) return;
+    const all=S.fish.concat(S.others);
+    for(const o of all){ if(o.caught) continue;
+      const m=entMouth(o); const d=Math.hypot(hx-m.x,hy-m.y);
+      if(d < Math.max(34,S.fishW*0.34)){ o.caught=true; S.caught=o; S.reelIn=true; sCatch(); sparkle(hx,hy); return; }
+    }
+  }
+
+  // ---------- Input ----------
+  function setDir(d,on){ S.pressed[d]=on; }
+  document.querySelectorAll(".ctl").forEach(b=>{
+    const d=b.dataset.dir;
+    const dn=e=>{e.preventDefault();ensureAudio();setDir(d,true);};
+    const up=e=>{e.preventDefault();setDir(d,false);};
+    b.addEventListener("pointerdown",dn); b.addEventListener("pointerup",up);
+    b.addEventListener("pointerleave",up); b.addEventListener("pointercancel",up);
+  });
+  const KMAP={ArrowLeft:"L",ArrowRight:"R",ArrowUp:"U",ArrowDown:"D",a:"L",d:"R",w:"U",s:"D"};
+  window.addEventListener("keydown",e=>{ const k=KMAP[e.key]; if(k){e.preventDefault();ensureAudio();setDir(k,true);} });
+  window.addEventListener("keyup",e=>{ const k=KMAP[e.key]; if(k){setDir(k,false);} });
+
+  document.getElementById("resetBtn").addEventListener("click",()=>{
+    S.score=0; document.getElementById("scoreVal").textContent=0;
+    S.fish.forEach(f=>f.el.remove()); S.others.forEach(o=>o.el.remove());
+    S.bubbles.forEach(b=>b.el.remove());
+    S.fish=[]; S.others=[]; S.bubbles=[]; S.reelIn=false; S.caught=null; S.lineLen=(S.minLen+S.maxLen)/2;
+    for(let i=0;i<6;i++) spawnFish();
+  });
+  document.getElementById("soundBtn").addEventListener("click",function(){ soundOn=!soundOn; this.innerHTML=soundOn?"&#x1F50A;":"&#x1F507;"; });
+
+  // ---------- Loop ----------
+  let last=0;
+  function frame(ts){
+    if(!S.running){ last=ts; requestAnimationFrame(frame); return; }
+    let dt=(ts-last)/1000; last=ts; if(dt>0.05)dt=0.05; S.t+=dt;
+
+    // boat move
+    const mv=(S.pressed.R?1:0)-(S.pressed.L?1:0);
+    S.boatX+=mv*Math.max(220,S.W*0.5)*dt;
+    S.boatX=Math.max(S.boatW*0.4,Math.min(S.W-S.boatW*0.4,S.boatX));
+    // line depth
+    if(!S.reelIn){ const dv=(S.pressed.D?1:0)-(S.pressed.U?1:0);
+      S.lineLen+=dv*Math.max(190,S.H*0.4)*dt; S.lineLen=Math.max(S.minLen,Math.min(S.maxLen,S.lineLen)); }
+
+    const bob=Math.sin(S.t*1.6)*4;
+    const rtx=rodTipX(), rty=S.rodTipY+bob;
+    boatEl.style.transform=`translate(${S.boatX-S.boatW/2}px,${S.boatTopY+bob}px)`;
+
+    // reel in caught
+    if(S.reelIn && S.caught){ S.lineLen-=Math.max(220,S.H*0.5)*dt; sReel();
+      if(S.lineLen<=S.minLen){ S.lineLen=S.minLen;
+        S.score+=(S.caught.val||1); document.getElementById("scoreVal").textContent=S.score;
+        sparkle(rtx,rty+S.minLen);
+        const arr=S.caught.type==="fish"?S.fish:S.others; const i=arr.indexOf(S.caught); if(i>=0)arr.splice(i,1);
+        S.caught.el.remove(); S.caught=null; S.reelIn=false;
+        if(S.fish.length<6) spawnFish();
+      }
+    }
+    const hx=rtx, hy=rty+S.lineLen;
+
+    // fish update
+    for(let i=S.fish.length-1;i>=0;i--){ const f=S.fish[i];
+      if(f===S.caught){ // ride the hook
+        f.x=hx-(f.dir>0?f.mfx:(1-f.mfx))*f.w; f.y=hy-f.mfy*f.h;
+        f.el.style.transform=`translate(${f.x}px,${f.y}px) scaleX(${f.dir})`; continue; }
+      f.x+=f.dir*f.v*dt;
+      if(f.dir>0 && f.x>S.W+f.w){ f.el.remove(); S.fish.splice(i,1); continue; }
+      if(f.dir<0 && f.x<-f.w*2){ f.el.remove(); S.fish.splice(i,1); continue; }
+      const wob=Math.sin(S.t*2+f.x*0.02)*3;
+      f.el.style.transform=`translate(${f.x}px,${f.y+wob}px) scaleX(${f.dir})`;
+      f.bub-=dt; if(f.bub<=0){ f.bub=1+Math.random()*1.4; const m=entMouth(f); addBubble(m.x,m.y,3+Math.random()*3); }
+    }
+    if(S.fish.length<6 && Math.random()<dt*0.7) spawnFish();
+
+    // others update
+    for(let i=S.others.length-1;i>=0;i--){ const o=S.others[i];
+      if(o===S.caught){ o.x=hx-(o.dir>0?o.mfx:(1-o.mfx))*o.w; o.y=hy-o.mfy*o.h;
+        o.el.style.transform=`translate(${o.x}px,${o.y}px) scaleX(${o.dir})`; continue; }
+      o.x+=o.dir*o.v*dt;
+      if((o.dir>0&&o.x>S.W+o.w)||(o.dir<0&&o.x<-o.w*2)){ o.el.remove(); S.others.splice(i,1); continue; }
+      const wob=Math.sin(S.t*1.5+o.x*0.02)*2;
+      o.el.style.transform=`translate(${o.x}px,${o.y+wob}px) scaleX(${o.dir})`;
+    }
+    S.spawnOther-=dt; if(S.spawnOther<=0 && S.others.length<2){ S.spawnOther=7+Math.random()*7; spawnOther(); }
+
+    // bubbles
+    for(let i=S.bubbles.length-1;i>=0;i--){ const b=S.bubbles[i]; b.life+=dt; b.y-=b.vy*dt; b.x+=Math.sin(b.life*4)*0.4;
+      b.el.style.transform=`translate(${b.x-b.r}px,${b.y-b.r}px)`; b.el.style.opacity=Math.max(0,1-b.life/b.max);
+      if(b.life>=b.max||b.y<S.waterY){ b.el.remove(); S.bubbles.splice(i,1); } }
+
+    // clouds
+    clouds.forEach(c=>{ c.x+=c.v*dt; if(c.x>S.W+200)c.x=-220; c.el.style.transform=`translate(${c.x}px,${c.y}px)`; });
+
+    // try catch
+    if(!S.reelIn) tryCatch(hx,hy);
+
+    // draw line + hook
+    lineSvg.setAttribute("viewBox",`0 0 ${S.W} ${S.H}`);
+    lineSvg.innerHTML=`<line x1="${rtx}" y1="${rty}" x2="${hx}" y2="${hy}" stroke="#3a3a3a" stroke-width="2"/>
+      <path d="M${hx} ${hy-6} q9 8 0 14 q-7 -2 -5 -8" fill="none" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="${hx}" cy="${hy-7}" r="3" fill="#e23b3b"/>`;
+
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Boot ----------
+  function start(){ S.running=true; for(let i=0;i<6;i++) spawnFish(); }
+  document.getElementById("startBtn").addEventListener("click",()=>{ ensureAudio(); document.getElementById("start").style.display="none"; start(); });
+  window.addEventListener("resize",size);
+  size();
+  requestAnimationFrame(frame);
+
+  if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+})();
+</script>
+</body>
+</html>
