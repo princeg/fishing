@@ -1,5 +1,5 @@
 // Offline cache so the fishing game works with no Wi-Fi once loaded once.
-const CACHE = "saira-fishing-v2";
+const CACHE = "saira-fishing-v3";
 const ASSETS = [
   "./", "index.html", "manifest.webmanifest",
   "apple-touch-icon.png", "icon-192.png", "icon-512.png"

@@ -277,15 +277,17 @@
       mfx:0.84,mfy:0.62};
     S.fish.push(f);
   }
-  function spawnOther(){
-    const r=Math.random(); let type;
-    if(r<0.28) type="turtle"; else if(r<0.52) type="crab"; else if(r<0.78) type="starfish"; else type="whale";
+  function spawnOther(force){
+    let type=force;
+    if(!type){ const r=Math.random();
+      if(r<0.24) type="turtle"; else if(r<0.46) type="crab"; else if(r<0.80) type="starfish"; else type="whale"; }
     const dir=Math.random()<0.5?1:-1;
+    const waterH=S.H-S.waterY;
     let html,w,h,v,val,mfx,mfy,y;
     if(type==="turtle"){ html=turtleSVG(); w=S.fishW*1.15; h=w*0.62; v=24+Math.random()*24; val=2; mfx=0.9; mfy=0.62; y=S.H-h*1.25-Math.random()*30; }
     else if(type==="crab"){ html=crabSVG(); w=S.fishW*1.1; h=w*0.67; v=22+Math.random()*22; val=2; mfx=0.5; mfy=0.62; y=S.H-h*1.2-Math.random()*20; }
-    else if(type==="starfish"){ html=starSVG(); w=S.fishW*0.72; h=w; v=12+Math.random()*14; val=1; mfx=0.5; mfy=0.58; y=S.H-h*1.15-Math.random()*45; }
-    else { html=whaleSVG(); w=S.fishW*2.0; h=w*0.58; v=26+Math.random()*20; val=3; mfx=0.86; mfy=0.58; y=S.waterY+(S.H-S.waterY)*0.28+Math.random()*40; }
+    else if(type==="starfish"){ html=starSVG(); w=S.fishW*0.9; h=w; v=14+Math.random()*14; val=1; mfx=0.5; mfy=0.55; y=S.waterY+waterH*0.45+Math.random()*waterH*0.25; }
+    else { html=whaleSVG(); w=S.fishW*2.0; h=w*0.58; v=26+Math.random()*20; val=3; mfx=0.86; mfy=0.58; y=S.waterY+waterH*0.28+Math.random()*40; }
     const el=makeEl(html,w,h);
     const o={el,type,dir,w,h,x:dir>0?-w-40:S.W+40,y,v,caught:false,bub:1.4,mfx,mfy,val};
     S.others.push(o);
@@ -329,7 +331,7 @@
     S.fish.forEach(f=>f.el.remove()); S.others.forEach(o=>o.el.remove());
     S.bubbles.forEach(b=>b.el.remove());
     S.fish=[]; S.others=[]; S.bubbles=[]; S.reelIn=false; S.caught=null; S.lineLen=(S.minLen+S.maxLen)/2;
-    for(let i=0;i<6;i++) spawnFish();
+    for(let i=0;i<6;i++) spawnFish(); spawnOther("starfish"); S.spawnOther=3;
   });
   document.getElementById("soundBtn").addEventListener("click",function(){ soundOn=!soundOn; this.innerHTML=soundOn?"&#x1F50A;":"&#x1F507;"; });
 
@@ -409,7 +411,8 @@
   }
 
   // ---------- Boot ----------
-  function start(){ S.running=true; for(let i=0;i<6;i++) spawnFish(); }
+  function start(){ S.running=true; for(let i=0;i<6;i++) spawnFish();
+    spawnOther("starfish"); spawnOther("turtle"); S.spawnOther=3; }
   document.getElementById("startBtn").addEventListener("click",()=>{ ensureAudio(); document.getElementById("start").style.display="none"; start(); });
   window.addEventListener("resize",size);
   size();
